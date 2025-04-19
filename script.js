@@ -4,7 +4,7 @@ const unitToggle = document.getElementById("unitToggle");
 const historyList = document.getElementById("historyList");
 const loader = document.getElementById("loader");
 
-const apiKey = "0527c9bd4d6bf351179261dd7c2e936d"; // Corrected API key (string format)
+const apiKey = import.meta.env.VITE_API_KEY;
 
 // Load search history on page load
 window.onload = () => {
