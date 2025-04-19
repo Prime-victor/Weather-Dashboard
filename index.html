@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Dashboard</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="container" id="app">
+    <h1>Weather Dashboard</h1>
+    <h3>Search History</h3>
+    <ul id="historyList"></ul>
+
+    <div class="clock" id="clock">--:--:--</div>
+
+    <div class="search-bar">
+      <input type="text" id="cityInput" placeholder="Enter city name"/>
+      <button onclick="getWeather()">Get Weather</button>
+      <select id="unitToggle" onchange="getWeather()">
+        <option value="metric">°C</option>
+        <option value="imperial">°F</option>
+      </select>
+    </div>
+
+    <div id="loader" class="hidden">Loading...</div>
+    <div id="weatherInfo" class="weather-card"></div>
+     <!-- 5-Day Forecast Section -->
+<h3>5-Day Forecast</h3>
+<div id="forecast" class="forecast-container"></div>
+
+<!-- Air Quality Index -->
+<h3>Air Quality Index</h3>
+<div id="aqiInfo" class="aqi-card"></div>
+
+<!-- Weather Trend Chart -->
+<h3>Temperature Trend</h3>
+<canvas id="tempChart" width="400" height="200"></canvas>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
