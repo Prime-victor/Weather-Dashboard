@@ -5,40 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Weather Dashboard</title>
   <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+/>
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 </head>
 <body>
   <div class="container" id="app">
-    <h1>Weather Dashboard</h1>
-    <h3>Search History</h3>
-    <ul id="historyList"></ul>
-
-    <div class="clock" id="clock">--:--:--</div>
-
-    <div class="search-bar">
-      <input type="text" id="cityInput" placeholder="Enter city name"/>
-      <button onclick="getWeather()">Get Weather</button>
-      <select id="unitToggle" onchange="getWeather()">
+    <!-- Top Bar - Improved with flex layout -->
+    <div class="top-bar">
+      <input type="text" id="cityInput" placeholder="🔍 Search city..." />
+      <button onclick="getWeather()" class="search-btn">Search</button>
+      <button onclick="getLocation()" class="location-btn">📍</button>
+      <select id="unitToggle" onchange="getWeather()" class="unit-toggle">
         <option value="metric">°C</option>
         <option value="imperial">°F</option>
       </select>
     </div>
 
-    <div id="loader" class="hidden">Loading...</div>
-    <div id="weatherInfo" class="weather-card"></div>
-     <!-- 5-Day Forecast Section -->
-<h3>5-Day Forecast</h3>
-<div id="forecast" class="forecast-container"></div>
+    <!-- Current Weather - Structured with placeholders -->
+    <div class="current-weather">
+      <div id="weatherInfo" class="weather-card">
+        <div class="weather-main">
+          <img id="weatherIcon" src="" alt="Weather Icon" class="weather-icon"/>
+          <div>
+            <span id="temp" class="temp">--°</span>
+            <span id="feelsLike" class="feels-like">Feels like --°</span>
+          </div>
+          <span id="condition" class="condition">--</span>
+        </div>
+      </div>
+      <div class="weather-stats">
+        <div class="stat-card">🌬️ <span>Wind</span><br><span id="wind">-- mph</span></div>
+        <div class="stat-card">💧 <span>Humidity</span><br><span id="humidity">--%</span></div>
+        <div class="stat-card">☀️ <span>UV Index</span><br><span id="uv">--</span></div>
+      </div>
+    </div>
 
-<!-- Air Quality Index -->
-<h3>Air Quality Index</h3>
-<div id="aqiInfo" class="aqi-card"></div>
+    <!-- Hourly Forecast - Scrollable container -->
+    <div class="section">
+      <h3>Hourly Forecast</h3>
+      <div id="hourlyForecast" class="scrollable-forecast">
+        <!-- JS will populate these -->
+        <div class="hour-item placeholder">
+          <span class="hour-time">--:--</span>
+          <div class="hour-icon">☀️</div>
+          <span class="hour-temp">--°</span>
+        </div>
+      </div>
+    </div>
 
-<!-- Weather Trend Chart -->
-<h3>Temperature Trend</h3>
-<canvas id="tempChart" width="400" height="200"></canvas>
+    <!-- 5-Day Forecast - Grid layout -->
+    <div class="section">
+      <h3>5-Day Forecast</h3>
+      <div id="forecast" class="forecast-container">
+        <!-- JS will populate these -->
+        <div class="day-card placeholder">
+          <span class="day-name">---</span>
+          <div class="day-icon">☀️</div>
+          <span class="day-temp">--° / --°</span>
+        </div>
+      </div>
+    </div>
 
-<!-- Chart.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Air Quality Index - Color-coded -->
+    <div class="section">
+      <h3>Air Quality Index</h3>
+      <div id="aqiInfo" class="aqi-card">
+        <div class="aqi-value">AQI: <span id="aqiValue">--</span></div>
+        <div id="aqiStatus" class="aqi-status">--</div>
+        <div class="aqi-bar">
+          <div id="aqiBarFill" class="aqi-bar-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Temperature Chart -->
+    <div class="section chart-section">
+      <h3>Temperature Trend</h3>
+      <canvas id="tempChart" width="400" height="200"></canvas>
+    </div>
+
+    <!-- Mini Radar Map - Placeholder for API integration -->
+    <div class="section">
+      <h3>Weather Map</h3>
+      <div id="miniMap" class="map-card">
+        <div class="map-placeholder">
+          <p>🌍 Map loading...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search History - Chip-style -->
+    <div class="section">
+      <h3>Search History</h3>
+      <div id="historyList" class="history-chips">
+        <!-- JS will populate these -->
+        <span class="chip placeholder">No history yet</span>
+      </div>
+      <button onclick="clearHistory()" class="clear-history-btn">Clear History</button>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div id="loader" class="loader hidden">
+    <div class="spinner"></div>
+    <p>Loading weather data...</p>
   </div>
 
   <script src="script.js"></script>

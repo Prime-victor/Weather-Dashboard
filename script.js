@@ -1,235 +1,206 @@
-const weatherInfo = document.getElementById("weatherInfo");
-const cityInput = document.getElementById("cityInput");
-const unitToggle = document.getElementById("unitToggle");
-const historyList = document.getElementById("historyList");
-const loader = document.getElementById("loader");
+// script.js
+const apiKey = '0527c9bd4d6bf351179261dd7c2e936d'; // Replace with your OpenWeatherMap API key
+const cityInput = document.getElementById('cityInput');
+const weatherInfo = document.getElementById('weatherInfo');
+const unitToggle = document.getElementById('unitToggle');
+const forecastContainer = document.getElementById('forecast');
+const hourlyForecast = document.getElementById('hourlyForecast');
+const aqiValue = document.getElementById('aqiValue');
+const aqiStatus = document.getElementById('aqiStatus');
+const aqiBarFill = document.getElementById('aqiBarFill');
+const tempChartCanvas = document.getElementById('tempChart');
+const historyList = document.getElementById('historyList');
+const loader = document.getElementById('loader');
+const app = document.getElementById('app');
 
-const apiKey = import.meta.env.VITE_API_KEY;
+let tempChart;
+let map; // Leaflet map instance
 
-// Load search history on page load
-window.onload = () => {
-  updateClock();
-  setInterval(updateClock, 1000);
-  loadSearchHistory();
-};
-
-// Update real-time clock
-function updateClock() {
-  const now = new Date();
-  document.getElementById("clock").textContent = now.toLocaleTimeString();
-}
-
-function getWeather(cityOverride = null) {
-  const city = cityOverride || cityInput.value.trim();
+function getWeather() {
+  const city = cityInput.value;
   const units = unitToggle.value;
+  if (!city) return;
 
-  if (!city) {
-    alert("Please enter a city name.");
-    return;
-  }
-
-  loader.classList.remove("hidden");
-  weatherInfo.innerHTML = "";
-
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
-
-  fetch(url)
+  showLoader();
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${units}&appid=${apiKey}`)
     .then(res => res.json())
     .then(data => {
-      loader.classList.add("hidden");
-
-      if (data.cod !== 200) {
-        weatherInfo.innerHTML = `<p>City not found.</p>`;
-        return;
-      }
-
-      const icon = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-      const tempUnit = units === "metric" ? "°C" : "°F";
-
-      weatherInfo.innerHTML = `
-        <h2>${data.name}, ${data.sys.country}</h2>
-        <img src="${icon}" alt="${data.weather[0].description}"/>
-        <p>${data.weather[0].main}</p>
-        <p>Temp: ${data.main.temp} ${tempUnit}</p>
-        <p>Humidity: ${data.main.humidity}%</p>
-        <p>Wind: ${data.wind.speed} ${units === "metric" ? "m/s" : "mph"}</p>
-      `;
-      getForecast(data.coord.lat, data.coord.lon, units);
-      getAQI(data.coord.lat, data.coord.lon);
-      getUVIndex(data.coord.lat, data.coord.lon);
-
-      // Change background based on weather condition
-      changeBackground(data.weather[0].main);
-
-      // Save to history
+      const { lat, lon } = data.coord;
+      updateCurrentWeather(data, units);
       saveToHistory(city);
+      updateBackground(data.weather[0].main);
+      initMap(lat, lon);
+
+      getForecast(lat, lon, units);
+      getAQI(lat, lon);
     })
-    .catch(err => {
-      loader.classList.add("hidden");
-      weatherInfo.innerHTML = `<p>Error fetching weather data.</p>`;
-      console.error(err);
-    });
+    .catch(() => alert('City not found'))
+    .finally(hideLoader);
 }
 
-function changeBackground(condition) {
-  let image = "";
-
-  switch (condition.toLowerCase()) {
-    case "clear":
-      image = "url('https://source.unsplash.com/1600x900/?sunny,sky')";
-      break;
-    case "clouds":
-      image = "url('https://source.unsplash.com/1600x900/?cloudy,sky')";
-      break;
-    case "rain":
-    case "drizzle":
-      image = "url('https://source.unsplash.com/1600x900/?rain')";
-      break;
-    case "snow":
-      image = "url('https://source.unsplash.com/1600x900/?snow')";
-      break;
-    case "thunderstorm":
-      image = "url('https://source.unsplash.com/1600x900/?thunderstorm')";
-      break;
-    default:
-      image = "url('https://source.unsplash.com/1600x900/?weather')";
-  }
-
-  document.body.style.backgroundImage = image;
-}
-
-function saveToHistory(city) {
-  let history = JSON.parse(localStorage.getItem("weatherHistory")) || [];
-
-  if (!history.includes(city)) {
-    history.unshift(city);
-    if (history.length > 5) history.pop(); // Limit to 5 entries
-    localStorage.setItem("weatherHistory", JSON.stringify(history));
-    loadSearchHistory();
-  }
-}
-
-function loadSearchHistory() {
-  const history = JSON.parse(localStorage.getItem("weatherHistory")) || [];
-  historyList.innerHTML = "";
-
-  history.forEach(city => {
-    const li = document.createElement("li");
-    li.textContent = city;
-    li.onclick = () => getWeather(city);
-    historyList.appendChild(li);
-  });
+function updateCurrentWeather(data, units) {
+  document.getElementById('temp').textContent = `${Math.round(data.main.temp)}°`;
+  document.getElementById('feelsLike').textContent = `Feels like ${Math.round(data.main.feels_like)}°`;
+  document.getElementById('condition').textContent = data.weather[0].description;
+  document.getElementById('weatherIcon').src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+  document.getElementById('wind').textContent = `${data.wind.speed} ${units === 'metric' ? 'm/s' : 'mph'}`;
+  document.getElementById('humidity').textContent = `${data.main.humidity}%`;
 }
 
 function getForecast(lat, lon, units) {
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`;
-  
-  fetch(url)
+  fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${units}&appid=${apiKey}`)
     .then(res => res.json())
     .then(data => {
-      const forecastContainer = document.getElementById("forecast");
-      forecastContainer.innerHTML = "";
-
-      const forecastMap = new Map();
-
-      data.list.forEach(item => {
-        const date = item.dt_txt.split(" ")[0];
-        if (!forecastMap.has(date) && forecastMap.size < 5) {
-          forecastMap.set(date, item);
-        }
-      });
-
-      const labels = [];
-      const temps = [];
-
-      forecastMap.forEach(day => {
-        const icon = `https://openweathermap.org/img/wn/${day.weather[0].icon}.png`;
-        const tempUnit = units === "metric" ? "°C" : "°F";
-        const date = new Date(day.dt_txt).toLocaleDateString(undefined, { weekday: 'short' });
-
-        forecastContainer.innerHTML += `
-          <div class="forecast-card">
-            <p>${date}</p>
-            <img src="${icon}" alt="${day.weather[0].description}" />
-            <p>${Math.round(day.main.temp)} ${tempUnit}</p>
-          </div>
-        `;
-
-        labels.push(date);
-        temps.push(day.main.temp);
-      });
-
-      renderChart(labels, temps, units);
+      renderHourlyForecast(data.list.slice(0, 6));
+      renderFiveDayForecast(data.list);
+      renderTemperatureTrend(data.list);
     });
 }
 
-function getAQI(lat, lon) {
-  const url = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`;
-
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const aqi = data.list[0].main.aqi;
-      const aqiText = ["Good", "Fair", "Moderate", "Poor", "Very Poor"];
-      const colors = ["#00e400", "#a3c853", "#ffde33", "#ff9933", "#cc0033"];
-
-      const aqiInfo = document.getElementById("aqiInfo");
-      aqiInfo.innerHTML = `
-        <p><strong>AQI:</strong> ${aqi} - ${aqiText[aqi - 1]}</p>
-        <div style="background:${colors[aqi - 1]};height:10px;border-radius:4px;"></div>
-      `;
-    });
-}
-
-let chartInstance;
-
-function renderChart(labels, temps, units) {
-  const ctx = document.getElementById("tempChart").getContext("2d");
-
-  if (chartInstance) {
-    chartInstance.destroy(); // Re-render on update
-  }
-
-  chartInstance = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: `Temperature (${units === "metric" ? "°C" : "°F"})`,
-        data: temps,
-        borderColor: "#00aaff",
-        backgroundColor: "rgba(0,170,255,0.1)",
-        borderWidth: 2,
-        pointRadius: 5,
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
-    }
+function renderHourlyForecast(list) {
+  hourlyForecast.innerHTML = '';
+  list.forEach(item => {
+    const hour = new Date(item.dt_txt).getHours();
+    hourlyForecast.innerHTML += `
+      <div class="hour-item">
+        <span class="hour-time">${hour}:00</span>
+        <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="" class="hour-icon">
+        <span class="hour-temp">${Math.round(item.main.temp)}°</span>
+      </div>`;
   });
 }
 
-function getUVIndex(lat, lon) {
-  const url = `https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+function renderFiveDayForecast(list) {
+  const daily = {};
+  list.forEach(item => {
+    const day = item.dt_txt.split(' ')[0];
+    if (!daily[day]) daily[day] = [];
+    daily[day].push(item);
+  });
+  const days = Object.keys(daily).slice(0, 5);
+  forecastContainer.innerHTML = '';
+  days.forEach(day => {
+    const temps = daily[day].map(i => i.main.temp);
+    const min = Math.min(...temps);
+    const max = Math.max(...temps);
+    const icon = daily[day][0].weather[0].icon;
+    const date = new Date(day);
+    forecastContainer.innerHTML += `
+      <div class="day-card">
+        <span class="day-name">${date.toLocaleDateString(undefined, { weekday: 'short' })}</span>
+        <img src="https://openweathermap.org/img/wn/${icon}.png" class="day-icon">
+        <span class="day-temp">${Math.round(min)}° / ${Math.round(max)}°</span>
+      </div>`;
+  });
+}
 
-  fetch(url)
+function renderTemperatureTrend(list) {
+  const temps = list.slice(0, 8).map(i => i.main.temp);
+  const labels = list.slice(0, 8).map(i => new Date(i.dt_txt).getHours() + ':00');
+  if (tempChart) tempChart.destroy();
+  tempChart = new Chart(tempChartCanvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Temp',
+        data: temps,
+        fill: true,
+        borderColor: '#007BFF',
+        backgroundColor: 'rgba(0,123,255,0.2)',
+        tension: 0.3
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+  });
+}
+
+function getAQI(lat, lon) {
+  fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`)
     .then(res => res.json())
     .then(data => {
-      const uvIndex = data.value;
-      const uvInfo = document.getElementById("uvInfo");
-      uvInfo.innerHTML = `<p><strong>UV Index:</strong> ${uvIndex}</p>`;
+      const aqi = data.list[0].main.aqi;
+      aqiValue.textContent = aqi;
+      aqiBarFill.style.width = `${aqi * 20}%`;
+
+      aqiBarFill.className = 'aqi-bar-fill';
+      if (aqi === 1) { aqiStatus.textContent = 'Good'; aqiBarFill.classList.add('aqi-good'); }
+      else if (aqi === 2) { aqiStatus.textContent = 'Moderate'; aqiBarFill.classList.add('aqi-moderate'); }
+      else if (aqi === 3) { aqiStatus.textContent = 'Unhealthy for Sensitive Groups'; aqiBarFill.classList.add('aqi-unhealthy'); }
+      else if (aqi === 4) { aqiStatus.textContent = 'Unhealthy'; aqiBarFill.classList.add('aqi-very-unhealthy'); }
+      else { aqiStatus.textContent = 'Hazardous'; aqiBarFill.classList.add('aqi-hazardous'); }
     });
 }
 
-function toggleUnits() {
-  const units = unitToggle.value;
-  const city = cityInput.value.trim();
-  if (city) {
-    getWeather(city);
+// Initialize or update Leaflet map with OpenStreetMap base & OWM overlay
+function initMap(lat, lon) {
+  if (!map) {
+    map = L.map('miniMap', { zoomControl: false }).setView([lat, lon], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.tileLayer(
+      `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${apiKey}`,
+      { opacity: 0.5 }
+    ).addTo(map);
+  } else {
+    map.setView([lat, lon], 8);
   }
 }
+
+function updateBackground(condition) {
+  app.classList.remove('sunny-bg', 'cloudy-bg', 'rainy-bg');
+  const lower = condition.toLowerCase();
+  if (lower.includes('cloud')) app.classList.add('cloudy-bg');
+  else if (lower.includes('rain') || lower.includes('shower')) app.classList.add('rainy-bg');
+  else app.classList.add('sunny-bg');
+}
+
+function saveToHistory(city) {
+  let history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+  if (!history.includes(city)) {
+    history.unshift(city);
+    localStorage.setItem('weatherHistory', JSON.stringify(history.slice(0, 6)));
+    renderHistory();
+  }
+}
+
+function renderHistory() {
+  let history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+  historyList.innerHTML = '';
+  history.forEach(city => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = city;
+    chip.onclick = () => { cityInput.value = city; getWeather(); };
+    historyList.appendChild(chip);
+  });
+}
+
+function clearHistory() {
+  localStorage.removeItem('weatherHistory');
+  renderHistory();
+}
+
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude, longitude } = pos.coords;
+      cityInput.value = 'Current Location';
+      updateBackground('sun');
+      initMap(latitude, longitude);
+      getForecast(latitude, longitude, unitToggle.value);
+      getAQI(latitude, longitude);
+    });
+  }
+}
+
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+}
+
+function showLoader() { loader.classList.remove('hidden'); }
+function hideLoader() { loader.classList.add('hidden'); }
+
+// On load
+renderHistory();
