@@ -1,5 +1,5 @@
-// script.js
-const apiKey = '0527c9bd4d6bf351179261dd7c2e936d'; // Replace with your OpenWeatherMap API key
+
+const apiKey = '0527c9bd4d6bf351179261dd7c2e936d'; 
 const cityInput = document.getElementById('cityInput');
 const weatherInfo = document.getElementById('weatherInfo');
 const unitToggle = document.getElementById('unitToggle');
@@ -14,7 +14,7 @@ const loader = document.getElementById('loader');
 const app = document.getElementById('app');
 
 let tempChart;
-let map; // Leaflet map instance
+let map; 
 
 function getWeather() {
   const city = cityInput.value;

@@ -1,5 +1,10 @@
-/* Base Styles */
 body {
+  
+  background-image: url('https://i.postimg.cc/KjqHHCP0/Stormy-Skies-Over-a-Green-Field.jpg');
+  background-size: cover;        /* scale to fill */
+  background-position: center;   /* center the image */
+  background-repeat: no-repeat;  /* don’t tile */
+  background-attachment: fixed;  /* parallax effect on scroll */
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
   background-color: var(--bg);
@@ -36,9 +41,12 @@ body {
 
 /* Container */
 .container {
+  background-color: var(--card-bg);
   max-width: 960px;
-  margin: 0 auto;
+  margin: 40px auto;
   padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
 /* Top Bar */
