@@ -1,120 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Weather Dashboard</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-/>
-<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>WeatherSphere - Modern Weather Dashboard</title>
+  <meta name="description" content="Real-time weather forecasts with interactive maps and air quality data">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container" id="app">
-    
-    <div class="top-bar">
-      <input type="text" id="cityInput" placeholder="🔍 Search city..." />
-      <button onclick="getWeather()" class="search-btn">Search</button>
-      <button onclick="getLocation()" class="location-btn">📍</button>
-      <select id="unitToggle" onchange="getWeather()" class="unit-toggle">
-        <option value="metric">°C</option>
-        <option value="imperial">°F</option>
-      </select>
-    </div>
+  <div class="weather-app">
+    <!-- Header with Search -->
+    <header class="app-header">
+      <div class="search-container">
+        <div class="search-box">
+          <input type="text" id="cityInput" placeholder="Search city..." aria-label="Search for a city">
+          <button id="searchBtn" class="btn-primary">
+            <i class="fas fa-search"></i> Search
+          </button>
+        </div>
+        <div class="header-controls">
+          <button id="locationBtn" class="btn-icon" aria-label="Use current location">
+            <i class="fas fa-location-arrow"></i>
+          </button>
+          <select id="unitToggle" class="unit-toggle">
+            <option value="metric">°C, m/s</option>
+            <option value="imperial">°F, mph</option>
+          </select>
+          <button id="themeToggle" class="btn-icon" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+      </div>
+    </header>
 
-    <!-- Current Weather - Structured with placeholders -->
-    <div class="current-weather">
-      <div id="weatherInfo" class="weather-card">
-        <div class="weather-main">
-          <img id="weatherIcon" src="" alt="Weather Icon" class="weather-icon"/>
-          <div>
-            <span id="temp" class="temp">--°</span>
-            <span id="feelsLike" class="feels-like">Feels like --°</span>
+    <!-- Main Content -->
+    <main class="app-main">
+      <!-- Current Weather Section -->
+      <section class="current-weather-section">
+        <div class="time-display">
+          <h1 id="currentTime"></h1>
+          <p id="currentDate"></p>
+        </div>
+        
+        <div class="current-weather-card">
+          <div class="weather-primary">
+            <div class="weather-icon-container">
+              <img id="weatherIcon" src="" alt="Current weather icon" class="weather-icon">
+            </div>
+            <div class="weather-temp">
+              <span id="currentTemp" class="temp-display">--°</span>
+              <span id="weatherCondition" class="condition-text">--</span>
+            </div>
           </div>
-          <span id="condition" class="condition">--</span>
+          
+          <div class="weather-details">
+            <div class="detail-item">
+              <i class="fas fa-temperature-low"></i>
+              <span>Feels like</span>
+              <span id="feelsLike">--°</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-wind"></i>
+              <span>Wind</span>
+              <span id="windSpeed">--</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-tint"></i>
+              <span>Humidity</span>
+              <span id="humidity">--%</span>
+            </div>
+            <div class="detail-item">
+              <i class="fas fa-sun"></i>
+              <span>UV Index</span>
+              <span id="uvIndex">--</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Forecast Sections -->
+      <section class="forecast-section">
+        <!-- Hourly Forecast -->
+        <div class="forecast-container">
+          <h2 class="section-title">
+            <i class="fas fa-clock"></i> Hourly Forecast
+          </h2>
+          <div id="hourlyForecast" class="hourly-container">
+            <!-- Filled by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Daily Forecast -->
+        <div class="forecast-container">
+          <h2 class="section-title">
+            <i class="fas fa-calendar-alt"></i> 5-Day Forecast
+          </h2>
+          <div id="dailyForecast" class="daily-container">
+            <!-- Filled by JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Additional Data Sections -->
+      <section class="data-section">
+        <!-- Air Quality -->
+        <div class="data-card">
+          <div class="card-header">
+            <h3><i class="fas fa-lungs"></i> Air Quality</h3>
+            <div class="aqi-value" id="aqiDisplay">--</div>
+          </div>
+          <div class="aqi-scale">
+            <div class="aqi-bar" id="aqiBar"></div>
+            <div class="aqi-labels">
+              <span>Good</span>
+              <span>Moderate</span>
+              <span>Unhealthy</span>
+              <span>Very Unhealthy</span>
+              <span>Hazardous</span>
+            </div>
+          </div>
+          <p class="aqi-description" id="aqiDescription">Air quality data loading...</p>
+          <div class="pollutants-grid" id="pollutantsContainer">
+            <!-- Filled by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Temperature Chart -->
+        <div class="data-card">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Temperature Trend</h3>
+          </div>
+          <canvas id="tempChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Weather Map -->
+      <section class="map-section">
+        <div class="map-controls">
+          <button class="map-btn active" data-layer="precipitation_new">
+            <i class="fas fa-cloud-rain"></i> Precipitation
+          </button>
+          <button class="map-btn" data-layer="temp_new">
+            <i class="fas fa-thermometer-half"></i> Temperature
+          </button>
+          <button class="map-btn" data-layer="wind_new">
+            <i class="fas fa-wind"></i> Wind
+          </button>
+        </div>
+        <div id="weatherMap" class="weather-map"></div>
+      </section>
+    </main>
+
+    <!-- Search History -->
+    <aside class="history-section">
+      <h3><i class="fas fa-history"></i> Search History</h3>
+      <div id="historyList" class="history-list">
+        <!-- Filled by JavaScript -->
+      </div>
+      <button id="clearHistoryBtn" class="btn-text">
+        <i class="fas fa-trash-alt"></i> Clear History
+      </button>
+    </aside>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+      <div class="loader">
+        <div class="loader-spinner"></div>
+        <p id="loadingText">Loading weather data...</p>
+        <div class="progress-container">
+          <div class="progress-bar" id="progressBar"></div>
         </div>
       </div>
-      <div class="weather-stats">
-        <div class="stat-card">🌬️ <span>Wind</span><br><span id="wind">-- mph</span></div>
-        <div class="stat-card">💧 <span>Humidity</span><br><span id="humidity">--%</span></div>
-        <div class="stat-card">☀️ <span>UV Index</span><br><span id="uv">--</span></div>
-      </div>
     </div>
 
-    <!-- Hourly Forecast - Scrollable container -->
-    <div class="section">
-      <h3>Hourly Forecast</h3>
-      <div id="hourlyForecast" class="scrollable-forecast">
-        
-        <div class="hour-item placeholder">
-          <span class="hour-time">--:--</span>
-          <div class="hour-icon">☀️</div>
-          <span class="hour-temp">--°</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5-Day Forecast - Grid layout -->
-    <div class="section">
-      <h3>5-Day Forecast</h3>
-      <div id="forecast" class="forecast-container">
-        
-        <div class="day-card placeholder">
-          <span class="day-name">---</span>
-          <div class="day-icon">☀️</div>
-          <span class="day-temp">--° / --°</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Air Quality Index - Color-coded -->
-    <div class="section">
-      <h3>Air Quality Index</h3>
-      <div id="aqiInfo" class="aqi-card">
-        <div class="aqi-value">AQI: <span id="aqiValue">--</span></div>
-        <div id="aqiStatus" class="aqi-status">--</div>
-        <div class="aqi-bar">
-          <div id="aqiBarFill" class="aqi-bar-fill"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Temperature Chart -->
-    <div class="section chart-section">
-      <h3>Temperature Trend</h3>
-      <canvas id="tempChart" width="400" height="200"></canvas>
-    </div>
-
-    <!-- Mini Radar Map - Placeholder for API integration -->
-    <div class="section">
-      <h3>Weather Map</h3>
-      <div id="miniMap" class="map-card">
-        <div class="map-placeholder">
-          <p>🌍 Map loading...</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Search History - Chip-style -->
-    <div class="section">
-      <h3>Search History</h3>
-      <div id="historyList" class="history-chips">
-        
-        <span class="chip placeholder">No history yet</span>
-      </div>
-      <button onclick="clearHistory()" class="clear-history-btn">Clear History</button>
+    <!-- Error Toast -->
+    <div id="errorToast" class="error-toast">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="errorMessage"></span>
     </div>
   </div>
 
-  <!-- Loading Indicator -->
-  <div id="loader" class="loader hidden">
-    <div class="spinner"></div>
-    <p>Loading weather data...</p>
-  </div>
-
+  <!-- JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
