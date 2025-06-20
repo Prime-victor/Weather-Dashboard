@@ -772,5 +772,22 @@ body {
   .pollutants-grid {
     grid-template-columns: 1fr 1fr;
   }
+}/* ===== Utility Classes ===== */
+/* (Your last blocks) */
+
+/* Smooth horizontal scrolling for hourly forecast on mobile */
+.hourly-container {
+  -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
+}
+
+/* Improve tap targets: bigger clickable areas for small screens */
+.btn,
+.btn-icon {
+  min-height: 44px; /* recommended minimum tap target size */
+}
+
+/* Prevent horizontal overflow */
+body {
+  overflow-x: hidden;
 }
 }
